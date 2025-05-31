@@ -11,37 +11,32 @@ import lyceeLogo from './assets/resources/pictures/lycee.jpeg';
 import bracuLogo from './assets/resources/pictures/bracu.png';
 import { Sun, Moon, Search, Menu, X, Linkedin, Facebook, Github, Instagram } from 'lucide-react';
 import PostDoorLockSystem from './PostDoorLockSystem';
+import picoImg from './assets/resources/pictures/pico.jpg';
+import thierryImg from './assets/resources/pictures/thierry.jpg';
+import esp32Img from './assets/resources/pictures/esp32.jpg';
+import erwiniatorImg from './assets/resources/pictures/erwiniator.jpg';
 
-// Typing Animation Hook
-function useTypingAnimation(strings, speed = 70, pause = 1200) {
-  const [display, setDisplay] = useState('');
-  const [index, setIndex] = useState(0);
-  const [subIndex, setSubIndex] = useState(0);
-  const [deleting, setDeleting] = useState(false);
+// --- Simple Auth State (for demonstration) ---
+const ADMIN_PASSWORD = "thierry"; // Change this to your own password
 
-  useEffect(() => {
-    if (index >= strings.length) setIndex(0);
-    if (!deleting && subIndex === strings[index].length) {
-      setTimeout(() => setDeleting(true), pause);
-      return;
+function useAdminAuth() {
+  const [isAdmin, setIsAdmin] = useState(() => typeof window !== "undefined" && localStorage.getItem('isAdmin') === 'true');
+  const login = (password) => {
+    if (password === ADMIN_PASSWORD) {
+      setIsAdmin(true);
+      if (typeof window !== "undefined") localStorage.setItem('isAdmin', 'true');
+      return true;
     }
-    if (deleting && subIndex === 0) {
-      setDeleting(false);
-      setIndex((i) => (i + 1) % strings.length);
-      return;
-    }
-    const timeout = setTimeout(() => {
-      setSubIndex((prev) =>
-        deleting ? prev - 1 : prev + 1
-      );
-    }, deleting ? speed / 2 : speed);
-    setDisplay(strings[index].substring(0, subIndex));
-    return () => clearTimeout(timeout);
-  }, [subIndex, index, deleting, strings, speed, pause]);
-  return display;
+    return false;
+  };
+  const logout = () => {
+    setIsAdmin(false);
+    if (typeof window !== "undefined") localStorage.removeItem('isAdmin');
+  };
+  return { isAdmin, login, logout };
 }
 
-// Matrix Rain Canvas Component
+// --- Matrix Rain Canvas Component with Gradient Overlay ---
 const MatrixRain = () => {
   const canvasRef = useRef(null);
 
@@ -73,6 +68,12 @@ const MatrixRain = () => {
         }
         drops[i]++;
       }
+      // Gradient overlay
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, 'rgba(0,255,64,0.25)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0.85)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
     }
 
     let animationId;
@@ -98,43 +99,15 @@ const MatrixRain = () => {
     <canvas
       ref={canvasRef}
       className="absolute top-0 left-0 w-full h-80 pointer-events-none z-0"
-      style={{ opacity: 0.5 }}
+      style={{ opacity: 0.7 }}
     />
   );
 };
 
-// Animated Terminal Intro Component
-const TerminalIntro = () => (
-  <div className="bg-black text-green-400 font-mono p-4 rounded-lg shadow-lg mb-6 relative overflow-hidden" style={{ minHeight: '120px' }}>
-    <span className="animate-pulse">thierry@matrix:~$</span> <span className="typing-animation">whoami</span>
-    <br />
-    <span className="animate-pulse">thierry@matrix:~$</span> <span className="typing-animation">echo "Obsessed with hacking, AI, and building cool stuff."</span>
-    <style>
-      {`
-        .typing-animation {
-          border-right: 2px solid #00ff41;
-          white-space: nowrap;
-          overflow: hidden;
-          animation: typing 2.5s steps(40, end) infinite alternate;
-        }
-        @keyframes typing {
-          from { width: 0 }
-          to { width: 100% }
-        }
-      `}
-    </style>
-  </div>
-);
-
-// Navigation Component with Typing Animation
-const Nav = ({ toggleDarkMode, isDarkMode }) => {
+// --- Navigation ---
+const Nav = ({ toggleDarkMode, isDarkMode, isAdmin, logout }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  const typingNav = useTypingAnimation([
-    'DataFuel | AI x Cybersecurity x Hacking',
-    'AI x Cybersecurity x Hacking | DataFuel',
-    'Hacking x AI x Cybersecurity | DataFuel'
-  ], 60, 1000);
 
   const navLinks = [
     { to: '/', label: 'Home' },
@@ -142,8 +115,8 @@ const Nav = ({ toggleDarkMode, isDarkMode }) => {
     { to: '/writings', label: 'Writings' },
     { to: '/projects', label: 'Projects' },
     { to: '/contact', label: 'Contact' },
-    { to: '/editor', label: 'Write Post' },
-    { to: '/writings/door-lock-system', label: 'Door Lock System' }, // Add link to the new post
+    ...(isAdmin ? [{ to: '/editor', label: 'Write Post' }] : []),
+    { to: '/writings/door-lock-system', label: 'Door Lock System' },
   ];
 
   return (
@@ -166,11 +139,10 @@ const Nav = ({ toggleDarkMode, isDarkMode }) => {
               textShadow: '0 0 6px #00ff41, 0 0 2px #00ff41'
             }}
           >
-            {typingNav}
+            DataFuel | AI x Cybersecurity x Hacking
             <span className="animate-pulse">|</span>
           </span>
         </div>
-        {/* Desktop Menu */}
         <ul className="hidden md:flex space-x-3">
           {navLinks.map(link => (
             <li key={link.to}>
@@ -183,8 +155,12 @@ const Nav = ({ toggleDarkMode, isDarkMode }) => {
               </Link>
             </li>
           ))}
+          {isAdmin && (
+            <li>
+              <button onClick={logout} className="ml-2 px-2 py-1 bg-red-600 rounded text-xs hover:bg-red-700">Logout</button>
+            </li>
+          )}
         </ul>
-        {/* Dark Mode & Hamburger */}
         <div className="flex items-center space-x-1">
           <button
             onClick={toggleDarkMode}
@@ -202,7 +178,6 @@ const Nav = ({ toggleDarkMode, isDarkMode }) => {
           </button>
         </div>
       </div>
-      {/* Mobile Menu */}
       {menuOpen && (
         <ul className="md:hidden flex flex-col space-y-1 mt-2 px-2 pb-2 animate-fade-in-down">
           {navLinks.map(link => (
@@ -217,34 +192,77 @@ const Nav = ({ toggleDarkMode, isDarkMode }) => {
               </Link>
             </li>
           ))}
+          {isAdmin && (
+            <li>
+              <button onClick={logout} className="ml-2 px-2 py-1 bg-red-600 rounded text-xs hover:bg-red-700 w-full">Logout</button>
+            </li>
+          )}
         </ul>
       )}
     </nav>
   );
 };
 
-// Home Page with Matrix Rain and Typing Animation
+// --- Admin Login Page ---
+const AdminLogin = ({ login }) => {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!login(password)) {
+      setError('Incorrect password.');
+    }
+  };
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="bg-gray-900 text-green-400 p-6 rounded-lg shadow-lg w-full max-w-xs">
+        <h2 className="text-xl font-bold mb-3 text-center">Admin Login</h2>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="password"
+            className="w-full mb-3 px-3 py-2 rounded bg-black border border-green-400 text-green-200"
+            placeholder="Enter admin password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+          />
+          {error && <div className="text-red-400 text-xs mb-2">{error}</div>}
+          <button type="submit" className="w-full bg-green-700 hover:bg-green-600 text-white py-2 rounded">Login</button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// --- Home Page ---
 const Home = ({ posts }) => {
-  const typingHero = useTypingAnimation([
-    "Hi, I’m Thierry Nshimiyumukiza. You found me.",
-    "I’m deeply obsessed with hacking and computer science. On this site, you’ll discover a ton of the work I pour my time and energy into.",
-    "Rock on, buddy!"
-  ], 40, 1200);
-
   const featuredPosts = posts ? posts.slice(0, 2) : [];
-
   return (
     <div style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '0.97rem', position: 'relative' }}>
       <div className="relative h-80 flex items-center justify-center bg-black overflow-hidden">
         <MatrixRain />
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-          <img src={profilePicture} alt="Thierry" className="w-16 h-16 rounded-full mx-auto mb-2 border-4 border-green-400 shadow-lg" />
-          <h1 className="text-2xl font-bold mb-1 text-green-400 drop-shadow-lg" style={{ textShadow: '0 0 8px #00ff41' }}>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-black/90 pointer-events-none z-10" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+          <img src={profilePicture} alt="Thierry" className="w-20 h-20 rounded-full mx-auto mb-2 border-4 border-green-400 shadow-lg" />
+          <h1 className="text-3xl font-bold mb-1 text-green-400 drop-shadow-lg" style={{ textShadow: '0 0 8px #00ff41' }}>
             Thierry Mukiza
           </h1>
-          <div className="text-green-300 font-mono text-sm sm:text-base mb-2 min-h-[2.5em]" style={{ textShadow: '0 0 8px #00ff41' }}>
-            {typingHero}
-            <span className="animate-pulse">|</span>
+          <div className="text-green-300 font-mono text-base sm:text-lg mb-2 min-h-[2.5em]" style={{ textShadow: '0 0 8px #00ff41' }}>
+            I’m deeply obsessed with hacking and computer science.<br />
+            
+          </div>
+          <div className="flex gap-4 mt-2">
+            <a href="https://github.com/thierrynshimiyumukiza" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="hover:text-gray-800 dark:hover:text-gray-200 transition-colors hover:scale-125 duration-200">
+              <Github size={28} />
+            </a>
+            <a href="https://www.linkedin.com/in/nshimiyumukiza-thierry-61976a290" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="hover:text-blue-700 transition-colors hover:scale-125 duration-200">
+              <Linkedin size={28} />
+            </a>
+            <a href="https://x.com/datafuel" target="_blank" rel="noopener noreferrer" aria-label="X" className="hover:text-black dark:hover:text-white transition-colors hover:scale-125 duration-200">
+              <svg width="28" height="28" fill="currentColor" viewBox="0 0 32 32"><path d="M19.5 13.6L28 4h-2.1l-7.4 8.3L12 4H4l9.1 13.1L4 28h2.1l7.9-8.9L20 28h8l-8.5-14.4zm-2.8 3.1l-1.1-1.6-7.3-10.3h4.7l5.8 8.2 1.1 1.6 7.6 10.7h-4.7l-6.1-8.6z"/></svg>
+            </a>
+            <a href="https://www.instagram.com/occupy_gateways/?hl=en" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-pink-600 transition-colors hover:scale-125 duration-200">
+              <Instagram size={28} />
+            </a>
           </div>
         </div>
       </div>
@@ -269,8 +287,95 @@ const Home = ({ posts }) => {
     </div>
   );
 };
+// Timeline Section
+const Timeline = () => (
+  <div className="my-8">
+    <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">My Journey</h3>
+    <ol className="relative border-l border-green-400 dark:border-green-600 ml-4">
+      <li className="mb-8 ml-6">
+        <span className="absolute -left-3 flex items-center justify-center w-6 h-6 bg-green-400 rounded-full ring-8 ring-white dark:ring-gray-900 dark:bg-green-600">
+          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10"/></svg>
+        </span>
+        <h4 className="font-bold text-green-700 dark:text-green-300">2019-2022: High School</h4>
+        <p className="text-gray-700 dark:text-gray-300">Graduated from Lycée de Kigali with top marks in Math, Physics, and Geography.</p>
+      </li>
+      <li className="mb-8 ml-6">
+        <span className="absolute -left-3 flex items-center justify-center w-6 h-6 bg-green-400 rounded-full ring-8 ring-white dark:ring-gray-900 dark:bg-green-600">
+          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10"/></svg>
+        </span>
+        <h4 className="font-bold text-green-700 dark:text-green-300">2023-2027: Brac University</h4>
+        <p className="text-gray-700 dark:text-gray-300">Pursuing Computer Science and Engineering.</p>
+      </li>
+      <li className="ml-6">
+        <span className="absolute -left-3 flex items-center justify-center w-6 h-6 bg-green-400 rounded-full ring-8 ring-white dark:ring-gray-900 dark:bg-green-600">
+          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10"/></svg>
+        </span>
+        <h4 className="font-bold text-green-700 dark:text-green-300">Future</h4>
+        <p className="text-gray-700 dark:text-gray-300">Building, hacking, and sharing knowledge with the world.</p>
+      </li>
+    </ol>
+  </div>
+);
 
-// About Page - Outstanding Version
+// Gallery Section
+const Gallery = () => (
+  <div className="my-8">
+    <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Gallery</h3>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="rounded-lg overflow-hidden shadow-lg">
+        <img src={picoImg} alt="Pico Project" className="object-cover w-full h-32" />
+        <div className="p-2 text-xs text-center text-gray-700 dark:text-gray-300">Pico Project</div>
+      </div>
+      <div className="rounded-lg overflow-hidden shadow-lg">
+        <img src={thierryImg} alt="Thierry" className="object-cover w-full h-32" />
+        <div className="p-2 text-xs text-center text-gray-700 dark:text-gray-300">Thierry</div>
+      </div>
+      <div className="rounded-lg overflow-hidden shadow-lg">
+        <img src={esp32Img} alt="ESP32" className="object-cover w-full h-32" />
+        <div className="p-2 text-xs text-center text-gray-700 dark:text-gray-300">ESP32</div>
+      </div>
+      <div className="rounded-lg overflow-hidden shadow-lg">
+        <img src={erwiniatorImg} alt="Erwiniator" className="object-cover w-full h-32" />
+        <div className="p-2 text-xs text-center text-gray-700 dark:text-gray-300">Erwiniator</div>
+      </div>
+    </div>
+  </div>
+);
+
+// Resume Download Section
+const ResumeSection = () => (
+  <div className="my-8 flex justify-center">
+    <a
+      href="/affi.pdf"
+      download="Thierry_Nshimiyumukiza_Resume.pdf"
+      className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded shadow transition-colors"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Download My Resume (PDF)
+    </a>
+  </div>
+);
+// Quote/Motto Section
+const Motto = () => (
+  <div className="my-8 max-w-xl mx-auto">
+    <blockquote className="border-l-4 border-green-500 pl-4 italic text-lg text-gray-700 dark:text-gray-200">
+      "There are no limits for someone who refuses to stop. I live to create, break, and understand."
+    </blockquote>
+    <div className="text-right text-green-600 dark:text-green-300 mt-2 font-mono">— Thierry Mukiza</div>
+  </div>
+);
+
+// Add this TerminalIntro component above About
+const TerminalIntro = () => (
+  <div className="bg-black text-green-400 font-mono p-4 rounded-lg shadow-lg mb-6 relative overflow-hidden" style={{ minHeight: '80px' }}>
+    <span>thierry@matrix:~$ whoami</span>
+    <br />
+    <span>thierry@matrix:~$ echo "Obsessed with hacking, AI, and building cool stuff."</span>
+  </div>
+);
+
+// Corrected About component
 const About = () => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -288,7 +393,10 @@ const About = () => (
       What defines me is obsession turned into action. I build wild things—hacking gadgets you'll find on my site—from signal jammers and custom routing tools to cipher generators, Windows kernel exploits, Active Directory attacks, and wireless vulnerability testing.
       I believe there are no limits for someone who refuses to stop. I live to create, break, and understand. <span className="font-bold">Stay hard.</span>
     </p>
-    {/* Animated Timeline */}
+    <Motto />
+    <Timeline />
+    <Gallery />
+    <ResumeSection />
     <div className="flex flex-col md:flex-row justify-center items-center gap-6 mb-6">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col items-center w-full md:w-1/2 mb-4 md:mb-0 hover:scale-105 transition-transform duration-300">
         <img src={lyceeLogo} alt="Lycee de Kigali" className="h-12 w-12 rounded-full mb-1 border-2 border-gray-300 dark:border-gray-600" />
@@ -303,11 +411,10 @@ const About = () => (
         <h2 className="text-lg font-semibold mb-1 text-green-700 dark:text-green-300">Undergraduate</h2>
         <p className="text-gray-700 dark:text-gray-300 mb-1 text-sm">2023 - 2027</p>
         <p className="text-gray-700 dark:text-gray-300 mb-1 text-sm">
-          I study at <a href="https://www.bracu.ac.bd/" target="_blank" rel="noopener noreferrer" className="text-green-600 underline hover:text-green-800">Brac University</a> in the Department of Computer Science and Engineering and secured a CGPA of <span className="font-bold">3.5+</span>.
+          I study at <a href="https://www.bracu.ac.bd/" target="_blank" rel="noopener noreferrer" className="text-green-600 underline hover:text-green-800">Brac University</a>in the department of computer science and engineering with a current CGPA of  <span className="font-bold">3+</span>.
         </p>
       </div>
     </div>
-    {/* Fun Facts */}
     <div className="mb-6">
       <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Fun Facts</h3>
       <ul className="flex flex-wrap justify-center gap-3 text-sm">
@@ -317,7 +424,6 @@ const About = () => (
         <li className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded shadow">I am obsessed with cool stuff</li>
       </ul>
     </div>
-    {/* Skills Visualization */}
     <div className="mb-6">
       <h3 className="text-lg font-semibold mb-1 text-gray-800 dark:text-gray-100">Languages & Skills</h3>
       <div className="flex flex-wrap justify-center gap-2 text-base">
@@ -329,7 +435,6 @@ const About = () => (
         <span className="bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">Networking</span>
         <span className="bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded">Reverse Engineering</span>
       </div>
-      {/* Animated Progress Bars */}
       <div className="mt-4 space-y-2 max-w-md mx-auto">
         <div>
           <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
@@ -365,7 +470,6 @@ const About = () => (
         </div>
       </div>
     </div>
-    {/* Animated Social Links */}
     <div className="flex justify-center gap-5 mb-6">
       <a href="https://www.linkedin.com/in/nshimiyumukiza-thierry-61976a290" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="hover:text-blue-700 transition-colors hover:scale-125 duration-200">
         <Linkedin size={28} />
@@ -383,7 +487,6 @@ const About = () => (
         <Instagram size={28} />
       </a>
     </div>
-    {/* Easter Egg */}
     <div className="mt-4 text-xs text-gray-400 dark:text-gray-600">
       <span title="You found the secret!">Pssst... Click my profile pic for a surprise.</span>
     </div>
@@ -644,7 +747,8 @@ const Projects = () => (
 function App() {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
-  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+  const [isDarkMode, setIsDarkMode] = useState(() => typeof window !== "undefined" && localStorage.getItem('darkMode') === 'true');
+  const { isAdmin, login, logout } = useAdminAuth();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -657,12 +761,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
+    if (typeof window !== "undefined") {
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('darkMode', 'true');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('darkMode', 'false');
+      }
     }
   }, [isDarkMode]);
 
@@ -671,7 +777,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300" style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '0.97rem' }}>
-        <Nav toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
+        <Nav toggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} isAdmin={isAdmin} logout={logout} />
         <Routes>
           <Route path="/" element={<Home posts={filteredPosts} />} />
           <Route path="/about" element={<About />} />
@@ -679,7 +785,14 @@ function App() {
           <Route path="/writings/:id" element={<Post posts={filteredPosts} />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/editor" element={<Editor />} />
+          <Route
+            path="/editor"
+            element={
+              isAdmin
+                ? <Editor />
+                : <AdminLogin login={login} />
+            }
+          />
           <Route path="/writings/door-lock-system" element={<PostDoorLockSystem />} />
         </Routes>
         <footer className="bg-gray-800 dark:bg-gray-900 text-white text-center p-3 mt-8" style={{ fontFamily: 'Times New Roman, Times, serif', fontSize: '0.97rem' }}>
