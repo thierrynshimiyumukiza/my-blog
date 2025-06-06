@@ -16,7 +16,7 @@ export default {
         },
       },
       fontFamily: {
-        cyber: ['Courier New', 'monospace'],
+        cyber: ['Fira Code', 'monospace'],
       },
       animation: {
         'matrix-rain': 'matrix 1s linear infinite',

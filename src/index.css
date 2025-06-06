@@ -15,14 +15,14 @@ html {
 
 body {
   background-color: var(--matrix-bg);
-  font-family: 'Courier New', monospace;
+  font-family: 'Fira Code', monospace;
 }
 
 /* Terminal text effect */
 .terminal-text {
   color: var(--neon-green);
   text-shadow: 0 0 5px var(--neon-green);
-  font-family: 'Courier New', monospace;
+  font-family: 'Fira Code', monospace;
 }
 
 /* Glitch effect */
@@ -65,6 +65,7 @@ body {
   letter-spacing: 0.1em;
   overflow: hidden;
   z-index: 1;
+  font-family: 'Fira Code', monospace;
 }
 
 .neon-button:hover {
@@ -113,6 +114,7 @@ body {
   --tw-prose-body: #d1d5db;
   --tw-prose-headings: #ffffff;
   --tw-prose-links: var(--cyber-blue);
+  font-family: 'Fira Code', monospace;
 }
 
 /* Terminal window */
@@ -121,7 +123,7 @@ body {
   border: 1px solid var(--neon-green);
   border-radius: 6px;
   padding: 1rem;
-  font-family: 'Courier New', monospace;
+  font-family: 'Fira Code', monospace;
   color: var(--neon-green);
   box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
 }
