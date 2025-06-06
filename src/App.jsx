@@ -15,6 +15,7 @@ import picoImg from './assets/resources/pictures/pico.jpg';
 import thierryImg from './assets/resources/pictures/thierry.jpg';
 import esp32Img from './assets/resources/pictures/esp32.jpg';
 import erwiniatorImg from './assets/resources/pictures/erwiniator.jpg';
+import { useAdminAuth } from './hooks/useAdminAuth';
 
 function App() {
   const [posts, setPosts] = useState([]);
